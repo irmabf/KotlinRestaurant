@@ -5,5 +5,7 @@
     <string name="previous">Anterior</string>
     <string name="next">Siguiente</string>
     <string name="dish_image">Imagen del plato</string>
-    <string name="title_activity_table_pager">activity_table_pager</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
+
+
