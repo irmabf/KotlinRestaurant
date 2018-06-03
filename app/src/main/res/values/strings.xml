@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">restaurantapplication</string>
     <string name="action_settings">Settings</string>
+    <string name="dish_price">Precio: %.2f €</string>
+    <string name="previous">Anterior</string>
+    <string name="next">Siguiente</string>
+    <string name="dish_image">Imagen del plato</string>
+    <string name="title_activity_table_pager">activity_table_pager</string>
 </resources>
