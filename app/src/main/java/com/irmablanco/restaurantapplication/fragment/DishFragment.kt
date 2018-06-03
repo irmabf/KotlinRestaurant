@@ -1,5 +1,6 @@
 package com.irmablanco.restaurantapplication.fragment
 
+
 import android.app.Fragment
 import android.os.AsyncTask
 import android.os.Bundle
@@ -11,9 +12,14 @@ import android.widget.TextView
 import com.irmablanco.restaurantapplication.R
 import com.irmablanco.restaurantapplication.model.Dish
 import com.irmablanco.restaurantapplication.model.Table
+import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.async
+import org.jetbrains.anko.coroutines.experimental.bg
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.*
 
 
 class DishFragment : Fragment() {
@@ -88,50 +94,25 @@ class DishFragment : Fragment() {
     }
 
     private fun updateDish() {
-
-        val dishesDownloader = object: AsyncTask<Table, Int, Dish?>(){
-
-            override fun onPreExecute() {
-                super.onPreExecute()
+        async(UI) {
+            // Esto ejecuta la descarga en 2º plano
+            val newDish: Deferred<Dish?> = bg {
+                downloadDish(table)
             }
 
-            override fun doInBackground(vararg params: Table): Dish? {
-                return downloadDish(params[0])
-            }
-
-            override fun onPostExecute(result: Dish?) {
-                super.onPostExecute(result)
-                if (result != null){
-                    // No hay errores, actualizo la interfaz
-                    table?.dish = result
-                    dish = result // Actualiza la interfaz
-                }
-            }
+            dish = newDish.await()
 
         }
 
-        dishesDownloader.execute(table)
-
     }
 
-    fun downloadDish(table: Table): Dish? {
+    fun downloadDish(table: Table?): Dish? {
         try {
-            // Descargo la informacion de internet
-            var url = URL("http://www.mocky.io/v2/5b1423be3100008e0078bf3a")
-            val con = url.openConnection() as HttpURLConnection
-            con.connect()
-            val data = ByteArray(1024)
-            var downloadedBytes:Int
-            val input = con.inputStream
-            var sb = StringBuilder()
-            downloadedBytes = input.read(data)
-            while (downloadedBytes != -1){
-                sb.append(String(data,0,downloadedBytes))
-                downloadedBytes = input.read(data)
-            }
-
-            // Analizamos los datos que nos acabamos de descargar
-            val jsonRoot = JSONObject(sb.toString())
+            // Descargo los datos de mocky api
+            var url = URL("http://www.mocky.io/v2/5b142a183100005a0078bf3c")
+            val jsonString = Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next()
+            
+            val jsonRoot = JSONObject(jsonString)
             val listDish = jsonRoot.getJSONArray("platos")
             val plato = listDish.getJSONObject(0)
             val name = plato.getString("nombre")
@@ -143,10 +124,12 @@ class DishFragment : Fragment() {
             // Convertimos el texto imageString a Drawable
             val imageInt = image.toInt()
             val imageResource = when (imageInt){
-                1 -> R.drawable.plato_donut
-                2 -> R.drawable.pancakes_postre
-                else -> R.drawable.plato_donut
+                1 -> R.drawable.pancakes_postre
+                2 -> R.drawable.plato_donut
+                else -> R.drawable.pancakes_postre
             }
+
+            Thread.sleep(5000)
 
             return Dish(name, imageResource, price, description, alergen)
 
@@ -158,5 +141,3 @@ class DishFragment : Fragment() {
     }
 
 }
-
-
