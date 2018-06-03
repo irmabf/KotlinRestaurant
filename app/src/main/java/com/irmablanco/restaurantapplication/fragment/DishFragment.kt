@@ -1,6 +1,6 @@
 package com.irmablanco.restaurantapplication.fragment
 
-
+import android.app.AlertDialog
 import android.app.Fragment
 import android.os.AsyncTask
 import android.os.Bundle
@@ -32,7 +32,6 @@ class DishFragment : Fragment() {
     companion object {
 
         val ARG_TABLE = "ARG_TABLE"
-
         // Creo esta funcion para recibir la instancia de este Fragment, con la mesa como argumento
         fun newInstance(table: Table): DishFragment {
             val fragment = DishFragment()
@@ -74,6 +73,7 @@ class DishFragment : Fragment() {
                 dishPrice.text = priceString
 
                 viewSwitcher.displayedChild = VIEW_INDEX.DISH.index
+                table?.dish = value
             }
             else {
                 updateDish()
@@ -113,8 +113,25 @@ class DishFragment : Fragment() {
             val newDish: Deferred<Dish?> = bg {
                 downloadDish(table)
             }
+            val downloadedDish = newDish.await()
 
-            dish = newDish.await()
+            if (downloadedDish != null) {
+                // It works
+                dish = downloadedDish
+            }
+            else {
+                // Ha habido algún tipo de error, se lo decimos al usuario con un diálogo
+                AlertDialog.Builder(activity)
+                        .setTitle("Error")
+                        .setMessage("Lo sentimos, no se ha podido cargar la información del menu")
+                        .setPositiveButton("Reintentar", { dialog, _ ->
+                            dialog.dismiss()
+                            updateDish()
+                        })
+                        .setNegativeButton("Salir", { _, _ -> activity.finish() })
+                        .show()
+            }
+
 
         }
 
@@ -143,7 +160,7 @@ class DishFragment : Fragment() {
                 else -> R.drawable.pancakes_postre
             }
 
-            Thread.sleep(5000)
+            Thread.sleep(1000)
 
             return Dish(name, imageResource, price, description, alergen)
 
