@@ -20,10 +20,15 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
+import android.widget.ViewSwitcher
 
 
 class DishFragment : Fragment() {
 
+    enum class VIEW_INDEX(val index: Int) {
+        LOADING(0),
+        DISH(1)
+    }
     companion object {
 
         val ARG_TABLE = "ARG_TABLE"
@@ -40,6 +45,7 @@ class DishFragment : Fragment() {
     }
 
     lateinit var root: View
+    lateinit var viewSwitcher: ViewSwitcher
 
     var table: Table? = null
         set(value){
@@ -66,6 +72,8 @@ class DishFragment : Fragment() {
 
                 val priceString = getString(R.string.dish_price, value.price)
                 dishPrice.text = priceString
+
+                viewSwitcher.displayedChild = VIEW_INDEX.DISH.index
             }
             else {
                 updateDish()
@@ -79,6 +87,10 @@ class DishFragment : Fragment() {
         if (inflater != null) {
 
             root = inflater.inflate(R.layout.fragment_dish, container, false)
+            viewSwitcher = root.findViewById(R.id.view_switcher)
+            viewSwitcher.setInAnimation(activity, android.R.anim.fade_in)
+            viewSwitcher.setOutAnimation(activity, android.R.anim.fade_out)
+
             if (arguments != null){
                 table = arguments.getSerializable(ARG_TABLE) as? Table
             }
@@ -94,6 +106,8 @@ class DishFragment : Fragment() {
     }
 
     private fun updateDish() {
+        viewSwitcher.displayedChild = VIEW_INDEX.LOADING.index
+
         async(UI) {
             // Esto ejecuta la descarga en 2º plano
             val newDish: Deferred<Dish?> = bg {
@@ -111,7 +125,7 @@ class DishFragment : Fragment() {
             // Descargo los datos de mocky api
             var url = URL("http://www.mocky.io/v2/5b142a183100005a0078bf3c")
             val jsonString = Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next()
-            
+
             val jsonRoot = JSONObject(jsonString)
             val listDish = jsonRoot.getJSONArray("platos")
             val plato = listDish.getJSONObject(0)
